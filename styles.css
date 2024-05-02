@@ -165,16 +165,24 @@ body {
     line-height: 150%;
 }
 
+/* Styles for the button link */
 .ticket-button {
     padding: 20px 40px;
     background-color: #FFF;
     color: #2D2626;
     border: none;
-    border-radius: 12px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 18px;
     font-weight: 600;
+    text-decoration: none; /* Remove underline */
 }
+
+.ticket-button:hover {
+    /* Optional: Change style on hover */
+    background-color: #f0f0f0;
+}
+
 /* Back arrow styling */
 .back-arrow {
     font-size: 24px; /* Adjust the size as needed */
@@ -288,7 +296,9 @@ body {
     }
 
     .ticket-button {
-        padding: 10px 20px; /* Adjust padding */
+        padding: 20px 40px; /* Adjust padding */
         font-size: 16px; /* Adjust font size */
     }
 }
+
+

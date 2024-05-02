@@ -35,6 +35,7 @@ body {
     font-weight: 300;
     color: #ffffff;
     margin-top: 10px; /* Reduce top margin to minimize spacing */
+    text-transform: uppercase;
 }
 
 /* Event styles */
@@ -157,12 +158,12 @@ body {
 
 .event-summary {
     text-align: left;
-    font-size: 14px;
-    font-weight: 200;
+    font-size: 18px;
+    font-weight: 300;
     margin-bottom: 60px;
     margin-right: 40px;
     margin-left: 40px;
-    line-height: 150%;
+    line-height: 160%;
 }
 
 /* Styles for the button link */

@@ -310,3 +310,15 @@ body {
         padding-top: 20px; /* Optional: Add padding to give breathing room */
     }
 }
+
+/* Hide scrollbar but enable scrolling */
+.hidden-scrollbar {
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.hidden-scrollbar::-webkit-scrollbar {
+    width: 0; /* Safari and Chrome */
+    height: 0; /* Safari and Chrome */
+}

@@ -219,18 +219,29 @@ body {
 /* Responsive Design */
 @media (max-width: 600px) {
     .event {
-        flex-direction: column; /* Stack elements vertically */
-        height: auto; /* Adjust height to fit content */
+        max-width: 85%; /* Adjust max-width to take full width */
     }
 
     .event-image {
-        width: 100%;
-        height: auto; /* Adjust image height */
-        border-radius: 12px 12px 0 0; /* Adjust image corners */
+        width: 130px; /* Slightly reduce image width */
+        height: 100%; /* Keep the same height */
+    }
+
+    .event-name {
+        font-size: 20px; /* Adjust font size */
+    }
+
+    .location {
+        font-size: 14px; /* Adjust font size */
     }
 
     .event-details {
-        padding: 10px; /* Adjust padding */
+        padding: 8px 10px; /* Adjust padding */
+    }
+
+    .ticket-button {
+        padding: 10px 20px; /* Adjust button padding */
+        font-size: 16px; /* Adjust font size */
     }
 }
 
@@ -262,7 +273,7 @@ body {
     max-width: 480px;
 }
 
-/* Responsive Design */
+/* Responsive Design for the Details Page */
 @media (max-width: 600px) {
     .content {
         max-width: 90%; /* Adjust max-width to fit screen */

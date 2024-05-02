@@ -101,21 +101,34 @@ body {
     margin: 0;
     margin-top: 5px;
 }
-/* Details Page Styling */
-.details-container {
+/* Details Page Styling 
+    .details-container {
     position: relative;
     width: 100vw;
     height: 100vh;
     background-image: 
-    url('https://files.offi.fr/programmation/2496990/images/600/070868741937a1ec1de9626025b85eec.jpg'); /* Background image */
+    url('https://files.offi.fr/programmation/2496990/images/600/070868741937a1ec1de9626025b85eec.jpg'); 
+    background-size: cover, cover, cover; 
+    background-position: center, center, center;
+    background-blend-mode: soft-light, normal; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    }
+*/
+
+.details-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
     background-size: cover, cover, cover; /* Ensure all images cover the background */
     background-position: center, center, center; /* Center all images */
     background-blend-mode: soft-light, normal; /* Blend the textured overlay and image */
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* Flow content from the top */
     align-items: center;
+    overflow-y: auto; /* Allow scrolling when content overflows */
 }
-
 .overlay {
     position: absolute;
     width: 100%;
@@ -124,15 +137,14 @@ body {
 }
 
 .content {
-    position: relative; /* Position relative to the overlay */
+    position: relative;
     color: #FFF; /* Text color */
     text-align: center;
     z-index: 1; /* Ensure text appears above overlay */
-    padding: 20px; /* Add padding for spacing */
+    padding: 20px;
     max-width: 480px; /* Limit content width */
+    overflow-y: auto; /* Enable vertical scrolling if content is long */
 }
-
-
 
 .event-title {
     font-size: 36px;
@@ -302,4 +314,10 @@ body {
     }
 }
 
-
+/* Media query for small height screens */
+@media (max-height: 600px) {
+    .details-container {
+        justify-content: flex-start; /* Align content to the top */
+        padding-top: 20px; /* Optional: Add padding to give breathing room */
+    }
+}

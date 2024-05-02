@@ -43,14 +43,16 @@
 </head>
 <body>
     <div class="details-container">
-            <div class="overlay"></div>
-            <div class="content">
-                <div class="back-arrow">✕</div> <!-- Back arrow -->
+        <div class="overlay"></div>
+        <div class="content">
+            <div class="back-arrow">✕</div> <!-- Back arrow -->
             <h1 class="event-title">Event Title</h1>
             <p class="venue-name">Venue Name</p>
-            <a class="ticket-button" style="display: none;">Tickets & Info</a>
-            <div class="hidden-scrollbar"><p class="event-summary"></p></div>
+            <div class="hidden-scrollbar"> <!-- Make this a container -->
+                <p class="event-summary"></p> <!-- Inside the hidden-scrollbar -->
             </div>
+            <a class="ticket-button" style="display: none;">Tickets & Info</a>
+        </div>
     </div>
 </body>
 </html>

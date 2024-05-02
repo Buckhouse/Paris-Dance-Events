@@ -311,14 +311,12 @@ body {
     }
 }
 
-/* Hide scrollbar but enable scrolling */
 .hidden-scrollbar {
-    overflow: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    overflow-y: scroll;
+    scrollbar-width: none; /* For Firefox */
+    -ms-overflow-style: none; /* For IE and Edge */
 }
 
 .hidden-scrollbar::-webkit-scrollbar {
-    width: 0; /* Safari and Chrome */
-    height: 0; /* Safari and Chrome */
+    display: none; /* For Chrome, Safari, and Opera */
 }

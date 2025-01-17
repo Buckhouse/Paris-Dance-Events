@@ -125,7 +125,8 @@ def parse_date_range(times_list: list):
 
     try:
         if len(times_list) == 1:
-            return [parser.parse(times_list[0]["datetime"]).date()]
+            date_obj = parser.parse(times_list[0]["datetime"])
+            return [date_obj.date()]
         elif len(times_list) == 2:
             start_date = parser.parse(times_list[0]["datetime"]).date()
             end_date = parser.parse(times_list[1]["datetime"]).date()
@@ -133,6 +134,15 @@ def parse_date_range(times_list: list):
     except Exception as e:
         logging.warning(f"Error parsing date range: {e}")
     return []
+
+def format_date_to_yyyy_mm_dd(date_str):
+    """Formats a date string to YYYY-MM-DD."""
+    try:
+        date_obj = parser.parse(date_str)
+        return date_obj.strftime('%Y-%m-%d')  # Format as YYYY-MM-DD
+    except Exception as e:
+        logging.warning(f"Error formatting date {date_str}: {e}")
+        return None
 
 def scrape_detail_page(url: str) -> str:
     """Fetches additional details from the event's detail page."""
@@ -230,7 +240,10 @@ def main():
             summary = summarizer.get_completion(details_txt) if details_txt else "No summary available."
 
             for event_date in event_dates:
-                date_str = event_date.strftime("%-d %B %Y")  # e.g., "6 janvier 2025"
+                date_str = format_date_to_yyyy_mm_dd(str(event_date))  # Ensure date is formatted correctly
+                if not date_str:
+                    logging.warning(f"Skipping invalid date for event {show_title}")
+                    continue
                 record_data = {
                     "Date": date_str,
                     "Event Name": show_title,

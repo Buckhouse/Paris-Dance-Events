@@ -5,7 +5,8 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import locale
-
+import sys
+import re
 # For loading .env
 from dotenv import load_dotenv
 
@@ -138,47 +139,45 @@ def parse_event_date(raw_date_str: str):
     """
     try:
         # Handle concatenated date ranges like "0618janv. 2025"
-        if len(raw_date_str) > 6 and raw_date_str[:2].isdigit() and raw_date_str[2:4].isdigit():
-            day_start = int(raw_date_str[:2])
-            day_end = int(raw_date_str[2:4])
-            month_year = raw_date_str[4:]  # Extract "janv. 2025"
+        match = re.match(r"(\d{2})(\d{2})([a-zéû]+)\.? (\d{4})", raw_date_str, re.IGNORECASE)
+        if match:
+            day_start, day_end, month_fr, year = match.groups()
+            day_start, day_end = int(day_start), int(day_end)
+            #print(day_start, day_end, month_fr, year)
+            month_fr = month_fr.lower()[:3] # haha locale only abbreviates to first three? Who would've known
             
-            # Ensure month abbreviation has a trailing period
-            if not month_year[4] == ".":
-                month_year = month_year[:4] + "." + month_year[4:]
 
             # Generate dates for the range
             date_list = []
             for day in range(day_start, day_end + 1):
-                date_str = f"{day} {month_year}"
-                parsed_date = datetime.strptime(date_str, "%d %b. %Y")
+                date_str = f"{day} {month_fr} {year}"
+                parsed_date = datetime.strptime(date_str, "%d %b %Y")
                 date_list.append(parsed_date.strftime("%-d %B %Y"))  # e.g., "6 janvier 2025"
+            #print("date list", date_list)
             return date_list
 
         # Handle single dates like "18 janv. 2025"
-        parts = raw_date_str.strip().split()
-        if len(parts) < 3:
-            print(f"[WARNING] Not enough parts to parse date: '{raw_date_str}'")
-            return []
+        match = re.match(r"(\d{2}) ([a-zéû]+)\.? (\d{4})", raw_date_str, re.IGNORECASE)
+        if match:
+            day_str, month_fr, year_str = match.groups()
 
-        day_str = parts[0]
-        month_fr = parts[1].replace(".", "").lower()
-        year_str = parts[-1]
+            # Map French month abbreviations to numbers
+            fr_month_map = {
+                "janv": "01", "févr": "02", "mars": "03", "avr": "04", "mai": "05",
+                "juin": "06", "juil": "07", "août": "08", "sept": "09", "oct": "10",
+                "nov": "11", "déc": "12",
+            }
+            month_num = fr_month_map.get(month_fr.lower(), "01")  # Default to "01" (January) if not found
 
-        # Map French month abbreviations to numbers
-        fr_month_map = {
-            "janv": "01", "févr": "02", "mars": "03", "avr": "04", "mai": "05",
-            "juin": "06", "juil": "07", "août": "08", "sept": "09", "oct": "10",
-            "nov": "11", "déc": "12",
-        }
-        month_num = fr_month_map.get(month_fr, "01")  # Default to "01" (January) if not found
+            # Construct the date string and parse it
+            date_str = f"{day_str}/{month_num}/{year_str}"
+            parsed_date = datetime.strptime(date_str, "%d/%m/%Y")
 
-        # Construct the date string and parse it
-        date_str = f"{day_str}/{month_num}/{year_str}"
-        parsed_date = datetime.strptime(date_str, "%d/%m/%Y")
+            # Return a single date in the list
+            return [parsed_date.strftime("%-d %B %Y")]
 
-        # Return a single date in the list
-        return [parsed_date.strftime("%-d %B %Y")]
+        print(f"[WARNING] No matching date format found for: '{raw_date_str}'")
+        return []
     except Exception as e:
         print(f"[WARNING] Couldn't parse date string '{raw_date_str}': {e}")
         return []
@@ -257,7 +256,7 @@ def main(start_date_str=None):
 # 8) ENTRY POINT
 # -------------------------------------------------------------------
 if __name__ == "__main__":
-    import sys
+    
 
     start_arg = sys.argv[1] if len(sys.argv) > 1 else None
     main(start_arg)

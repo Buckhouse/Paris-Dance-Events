@@ -14,23 +14,22 @@
 </body>
 
 <script>
-    // Replace with your Airtable base and API key
     const AIRTABLE_API_KEY = 'patkh9op2gMd1xAr3.4abbd851a95b9c5730b28b44545e91785328f840a92328b1b1fffd50868e566c';
     const BASE_ID = 'appMlyQoIVpWTzj79';
     const TABLE_NAME = 'tblzZL41j94BPih1Q';
     const API_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
-    const headers = {
-        'Authorization': `Bearer ${AIRTABLE_API_KEY}`
-    };
+    const headers = { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` };
 
-    // Function to fetch data from Airtable
+    // Fetch data from Airtable
     async function fetchEventData() {
         try {
             const response = await fetch(API_URL, { headers });
             const data = await response.json();
+            console.log('Fetched events:', data.records);
             return data.records; // Returns the list of event records
         } catch (error) {
             console.error('Error fetching data:', error);
+            alert('Could not load events. Check the console for details.');
             return [];
         }
     }
@@ -45,22 +44,39 @@
             const nextDay = new Date(today);
             nextDay.setDate(today.getDate() + i);
             const dayName = daysOfWeek[nextDay.getDay()];
-            const formattedDate = nextDay.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const formattedDate = nextDay.toISOString().split('T')[0]; // Ensure YYYY-MM-DD format
             weekDays.push({ dayName, formattedDate });
         }
 
+        console.log('Generated week days:', weekDays);
         return weekDays;
     }
 
-    // Function to check if the event matches the target date
+    // Match an event's date with a target date
     function matchesTargetDate(eventDateStr, targetDate) {
-        return eventDateStr.trim().toLowerCase() === targetDate.toLowerCase();
+        if (!eventDateStr) return false; // Handle missing dates
+
+        // Parse the date
+        const parsedDate = new Date(eventDateStr);
+
+        // If date is invalid, log and return false
+        if (isNaN(parsedDate)) {
+            console.error(`Invalid date: ${eventDateStr}`);
+            return false;
+        }
+
+        // Convert the parsed date to ISO format (YYYY-MM-DD) for comparison
+        const eventDate = parsedDate.toISOString().split('T')[0];
+        console.log(`Comparing event date "${eventDate}" with target date "${targetDate}"`);
+        return eventDate === targetDate;
     }
 
     // Function to render the events of a specific day
     function renderEventsForDay(day, date, events) {
-        const eventContainer = document.createElement('div');
-        eventContainer.className = 'events';
+        const container = document.getElementById('events-container');
+
+        const daySection = document.createElement('div');
+        daySection.className = 'day-section';
 
         const headerDiv = document.createElement('div');
         headerDiv.className = 'header';
@@ -75,50 +91,55 @@
         dateHeader.textContent = date;
         headerDiv.appendChild(dateHeader);
 
-        eventContainer.appendChild(headerDiv);
+        daySection.appendChild(headerDiv);
 
-        events.forEach(event => {
-            const fields = event.fields;
-            const eventDateStr = fields['Date']; // Adjust based on your Airtable field name
+        const matchingEvents = events.filter(event => matchesTargetDate(event.fields.Date, date));
+        console.log(`Events for ${day} (${date}):`, matchingEvents);
 
-            if (matchesTargetDate(eventDateStr, date)) {
+        if (matchingEvents.length === 0) {
+            const noEventsMessage = document.createElement('p');
+            noEventsMessage.textContent = 'Aucun événement prévu pour ce jour.';
+            noEventsMessage.className = 'no-events';
+            daySection.appendChild(noEventsMessage);
+        } else {
+            matchingEvents.forEach(event => {
+                const fields = event.fields;
+
                 const eventDiv = document.createElement('div');
                 eventDiv.className = 'event';
 
-                eventDiv.onclick = () => {
-                    // Store event details in session storage
-                    sessionStorage.setItem('eventDetails', JSON.stringify(fields));
-                    // Redirect to the details page
-                    window.location.href = 'details.html';
-                };
-
                 const eventDetailsDiv = document.createElement('div');
                 eventDetailsDiv.className = 'event-details';
-                eventDiv.appendChild(eventDetailsDiv);
 
                 const eventName = document.createElement('h2');
-                eventName.textContent = fields['Event Name'];
+                eventName.textContent = fields['Event Name'] || 'Événement sans titre';
                 eventName.className = 'event-name';
                 eventDetailsDiv.appendChild(eventName);
 
                 const location = document.createElement('p');
-                location.textContent = fields['Location'];
+                location.textContent = fields['Location'] || 'Lieu non spécifié';
                 location.className = 'location';
                 eventDetailsDiv.appendChild(location);
 
                 if (fields['Image URL']) {
                     const eventImage = document.createElement('img');
                     eventImage.src = fields['Image URL'];
-                    eventImage.alt = 'Event Image';
+                    eventImage.alt = `Image for ${fields['Event Name'] || 'Event'}`;
                     eventImage.className = 'event-image';
                     eventDiv.appendChild(eventImage);
                 }
 
-                eventContainer.appendChild(eventDiv);
-            }
-        });
+                eventDiv.onclick = () => {
+                    sessionStorage.setItem('eventDetails', JSON.stringify(fields));
+                    window.location.href = 'details.html';
+                };
 
-        document.body.appendChild(eventContainer);
+                eventDiv.appendChild(eventDetailsDiv);
+                daySection.appendChild(eventDiv);
+            });
+        }
+
+        container.appendChild(daySection);
     }
 
     // Fetch and display events for the next seven days starting from today
@@ -131,6 +152,7 @@
         });
     }
 
-    // Call the function to update events on page load
     updateEvents();
 </script>
+
+</html>

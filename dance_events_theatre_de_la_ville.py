@@ -142,7 +142,7 @@ def upload_to_airtable(data: dict):
 def parse_event_date(raw_date_str: str):
     """
     Parse a raw date string like '0618janv. 2025' or '10 18 janv. 2025' into individual dates.
-    Return a list of formatted dates or an empty list if parsing fails.
+    Return a list of formatted dates (YYYY-MM-DD) or an empty list if parsing fails.
     """
     try:
         # Handle concatenated date ranges like "0618janv. 2025"
@@ -150,17 +150,14 @@ def parse_event_date(raw_date_str: str):
         if match:
             day_start, day_end, month_fr, year = match.groups()
             day_start, day_end = int(day_start), int(day_end)
-            #print(day_start, day_end, month_fr, year)
-            month_fr = month_fr.lower()[:3] # haha locale only abbreviates to first three? Who would've known
-            
+            month_fr = month_fr.lower()[:3]
 
             # Generate dates for the range
             date_list = []
             for day in range(day_start, day_end + 1):
                 date_str = f"{day} {month_fr} {year}"
                 parsed_date = datetime.strptime(date_str, "%d %b %Y")
-                date_list.append(parsed_date.strftime("%-d %B %Y"))  # e.g., "6 janvier 2025"
-            #print("date list", date_list)
+                date_list.append(parsed_date.strftime("%Y-%m-%d"))  # Format as YYYY-MM-DD
             return date_list
 
         # Handle single dates like "18 janv. 2025"
@@ -181,7 +178,7 @@ def parse_event_date(raw_date_str: str):
             parsed_date = datetime.strptime(date_str, "%d/%m/%Y")
 
             # Return a single date in the list
-            return [parsed_date.strftime("%-d %B %Y")]
+            return [parsed_date.strftime("%Y-%m-%d")]
 
         print(f"[WARNING] No matching date format found for: '{raw_date_str}'")
         return []
@@ -247,7 +244,7 @@ def main(start_date_str=None):
             event_data = {
                 "Event Name": entry_name,
                 "Location": venue_name,
-                "Date": event_date,
+                "Date": event_date,  # Output validated YYYY-MM-DD dates
                 "Venue URL": venue_url,
                 "Details URL": event_url,
                 "Summary": summary_txt,

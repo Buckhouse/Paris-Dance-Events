@@ -107,9 +107,16 @@ def fetch_event_details(url: str):
     # Hardcode the main venue site
     venue_url = "https://www.theatredelaville-paris.com/"
 
+
+    image = soup.find("img"),# class_="header-media header-image-lazyload initial loaded")
+    image = image[0] if image else None
+    # get url
+    image_url = image.get("data-src") if image else "No image found" # tricksters with their transparent gif base64s in the real src. I'm not fooled!
+
+
     print(f"[DEBUG] Event name: {event_name}")
     print(f"[DEBUG] Details text length: {len(text)} characters")
-    return text, venue_url, event_name, venue_name
+    return text, venue_url, event_name, venue_name, image_url
 
 
 # -------------------------------------------------------------------
@@ -228,7 +235,7 @@ def main(start_date_str=None):
         event_dates = parse_event_date(raw_date_str)
 
         # Next, fetch the details page
-        details_txt, venue_url, entry_name, venue_name = fetch_event_details(event_url)
+        details_txt, venue_url, entry_name, venue_name, image_url = fetch_event_details(event_url)
         if not details_txt:
             continue
 
@@ -244,6 +251,7 @@ def main(start_date_str=None):
                 "Venue URL": venue_url,
                 "Details URL": event_url,
                 "Summary": summary_txt,
+                "Image URL": image_url,
             }
 
             print(f"[DEBUG] Preparing to upload event: {entry_name} on {event_date}")

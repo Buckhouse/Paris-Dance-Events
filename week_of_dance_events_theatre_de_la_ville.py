@@ -46,11 +46,8 @@ class DanceEventsSummarize:
             )
 
         # Create the new OpenAI client
-        self.client = OpenAI(
-            api_key=api_key  # This is the default, but we can pass it explicitly
-        )
+        self.client = OpenAI(api_key=api_key)
 
-    # *** MAKE SURE THIS METHOD IS INDENTED UNDER THE CLASS ***
     def get_completion(self, details_txt: str) -> str:
         system_message = {
             "role": "system",
@@ -73,8 +70,6 @@ class DanceEventsSummarize:
                 max_tokens=500,
                 temperature=0.5,
             )
-
-            # Access .content instead of ["content"]
             summary = chat_completion.choices[0].message.content
             print("[DEBUG] Received summary from OpenAI.")
             return summary
@@ -138,47 +133,59 @@ def upload_to_airtable(data: dict):
 # -------------------------------------------------------------------
 def parse_event_date(raw_date_str: str):
     """
-    Attempt to parse a date string like '06 18 janv. 2025' or '10 18 janv. 2025'.
-    If parse fails, return None.
+    Parse a raw date string like '0618janv. 2025' or '10 18 janv. 2025' into individual dates.
+    Return a list of formatted dates or an empty list if parsing fails.
     """
     try:
+        # Handle concatenated date ranges like "0618janv. 2025"
+        if len(raw_date_str) > 6 and raw_date_str[:2].isdigit() and raw_date_str[2:4].isdigit():
+            day_start = int(raw_date_str[:2])
+            day_end = int(raw_date_str[2:4])
+            month_year = raw_date_str[4:]  # Extract "janv. 2025"
+            
+            # Ensure month abbreviation has a trailing period
+            if not month_year[4] == ".":
+                month_year = month_year[:4] + "." + month_year[4:]
+
+            # Generate dates for the range
+            date_list = []
+            for day in range(day_start, day_end + 1):
+                date_str = f"{day} {month_year}"
+                parsed_date = datetime.strptime(date_str, "%d %b. %Y")
+                date_list.append(parsed_date.strftime("%-d %B %Y"))  # e.g., "6 janvier 2025"
+            return date_list
+
+        # Handle single dates like "18 janv. 2025"
         parts = raw_date_str.strip().split()
-        # Example: ["06", "18", "janv.", "2025"]
         if len(parts) < 3:
             print(f"[WARNING] Not enough parts to parse date: '{raw_date_str}'")
-            return None
-
-        year_str = parts[-1]
-        month_fr = parts[-2].replace(".", "").lower()
-        fr_month_map = {
-            "janv": "01",
-            "févr": "02",
-            "mars": "03",
-            "avr": "04",
-            "mai": "05",
-            "juin": "06",
-            "juil": "07",
-            "août": "08",
-            "sept": "09",
-            "oct": "10",
-            "nov": "11",
-            "déc": "12",
-        }
-        month_num = fr_month_map.get(month_fr, "01")
+            return []
 
         day_str = parts[0]
+        month_fr = parts[1].replace(".", "").lower()
+        year_str = parts[-1]
+
+        # Map French month abbreviations to numbers
+        fr_month_map = {
+            "janv": "01", "févr": "02", "mars": "03", "avr": "04", "mai": "05",
+            "juin": "06", "juil": "07", "août": "08", "sept": "09", "oct": "10",
+            "nov": "11", "déc": "12",
+        }
+        month_num = fr_month_map.get(month_fr, "01")  # Default to "01" (January) if not found
+
+        # Construct the date string and parse it
         date_str = f"{day_str}/{month_num}/{year_str}"
+        parsed_date = datetime.strptime(date_str, "%d/%m/%Y")
 
-        event_date = datetime.strptime(date_str, "%d/%m/%Y")
-        return event_date
-    except ValueError:
-        print(f"[WARNING] Couldn't parse date string: '{raw_date_str}'")
-        return None
-
-
+        # Return a single date in the list
+        return [parsed_date.strftime("%-d %B %Y")]
+    except Exception as e:
+        print(f"[WARNING] Couldn't parse date string '{raw_date_str}': {e}")
+        return []
 # -------------------------------------------------------------------
 # 7) MAIN SCRAPER
 # -------------------------------------------------------------------
+
 def main(start_date_str=None):
     summarizer = DanceEventsSummarize()
 
@@ -218,7 +225,8 @@ def main(start_date_str=None):
         raw_date_str = date_tag.get_text(strip=True) if date_tag else ""
         print(f"[DEBUG] Raw date string: '{raw_date_str}'")
 
-        event_date = parse_event_date(raw_date_str)
+        # Parse date range into individual dates
+        event_dates = parse_event_date(raw_date_str)
 
         # Next, fetch the details page
         details_txt, venue_url, entry_name, venue_name = fetch_event_details(event_url)
@@ -228,27 +236,22 @@ def main(start_date_str=None):
         # Summarize with the new style
         summary_txt = summarizer.get_completion(details_txt)
 
-        # If parse succeeded, put a nice date, else fallback
-        if event_date:
-            date_for_airtable = event_date.strftime("%-d %B %Y")  # e.g. "18 janvier 2025"
-        else:
-            date_for_airtable = raw_date_str
+        # Upload a row for each date
+        for event_date in event_dates:
+            event_data = {
+                "Event Name": entry_name,
+                "Location": venue_name,
+                "Date": event_date,
+                "Venue URL": venue_url,
+                "Details URL": event_url,
+                "Summary": summary_txt,
+            }
 
-        event_data = {
-            "Event Name": entry_name,
-            "Location": venue_name,
-            "Date": date_for_airtable,
-            "Venue URL": venue_url,
-            "Details URL": event_url,
-            "Summary": summary_txt,
-        }
-
-        print(f"[DEBUG] Preparing to upload event: {entry_name}")
-        result = upload_to_airtable(event_data)
-        print(f"[DEBUG] Airtable upload result: {result}")
+            print(f"[DEBUG] Preparing to upload event: {entry_name} on {event_date}")
+            result = upload_to_airtable(event_data)
+            print(f"[DEBUG] Airtable upload result: {result}")
 
     print("[DEBUG] Finished processing all events.")
-
 
 # -------------------------------------------------------------------
 # 8) ENTRY POINT
@@ -256,6 +259,5 @@ def main(start_date_str=None):
 if __name__ == "__main__":
     import sys
 
-    # If user passed e.g. 16/01/2025 on the CLI
     start_arg = sys.argv[1] if len(sys.argv) > 1 else None
     main(start_arg)
